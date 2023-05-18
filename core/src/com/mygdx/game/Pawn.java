@@ -2,6 +2,10 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Texture;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class Pawn extends Piece {
 
 
@@ -11,12 +15,29 @@ public class Pawn extends Piece {
 
     @Override
     public boolean isValidMove(int sourceRow, int sourceCol, int destRow, int destCol, ChessBoard board) {
-        int tileAmount = Math.abs(destRow - sourceRow);
         Piece destinationPiece = board.getPiece(destRow, destCol);
-        if ((sourceRow == 1 || sourceRow == 6) && (sourceCol == destCol) && !(tileAmount > 2)) {
-            return destinationPiece == null || destinationPiece.getColour() != this.getColour();
-        } else if ((sourceCol == destCol) && !(tileAmount > 1)) {
-            return destinationPiece == null || destinationPiece.getColour() != this.getColour();
+        if (sourceCol == destCol) {
+            // Moving forward
+            if (this.getColour() == PieceColour.BLACK && destRow == sourceRow + 1 && destinationPiece == null) {
+                return true;
+            }
+            // Moving forward two squares from initial position
+            else if (this.getColour() == PieceColour.BLACK && sourceRow == 1 && destRow == 3 && destinationPiece == null && board.getPiece(2, destCol) == null) {
+                return true;
+            }
+            // Moving forward
+            else if (this.getColour() == PieceColour.WHITE && destRow == sourceRow - 1 && destinationPiece == null) {
+                return true;
+            }
+            // Moving forward two squares from initial position
+            else
+                return this.getColour() == PieceColour.WHITE && sourceRow == 6 && destRow == 4 && destinationPiece == null && board.getPiece(5, destCol) == null;
+        } else if (Math.abs(sourceCol - destCol) == 1) {
+            // Capturing diagonally
+            if (this.getColour() == PieceColour.BLACK && destRow == sourceRow + 1 && destinationPiece != null && destinationPiece.getColour() == PieceColour.WHITE) {
+                return true;
+            } else
+                return this.getColour() == PieceColour.WHITE && destRow == sourceRow - 1 && destinationPiece != null && destinationPiece.getColour() == PieceColour.BLACK;
         }
 
         return false;
