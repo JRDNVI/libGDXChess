@@ -12,6 +12,6 @@ public class DesktopLauncher {
 		config.setTitle("Chess");
 		config.setWindowedMode(500, 500);
 		new Lwjgl3Application(new Main(), config);
-		//ChessBoard board = new ChessBoard();
+		ChessBoard board = new ChessBoard();
 	}
 }

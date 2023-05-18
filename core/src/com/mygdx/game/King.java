@@ -1,5 +1,7 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.graphics.Texture;
+
 public class King extends Piece{
 
 
@@ -15,5 +17,14 @@ public class King extends Piece{
     @Override
     public String getSymbol() {
         return "K";
+    }
+
+    @Override
+    public Texture getTexture() {
+        if(this.getColour() == PieceColour.BLACK) {
+            return new Texture("black_king.png");
+        } else {
+            return new Texture("white_king.png");
+        }
     }
 }

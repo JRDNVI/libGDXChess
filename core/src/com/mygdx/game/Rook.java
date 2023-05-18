@@ -1,5 +1,7 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.graphics.Texture;
+
 public class Rook extends Piece {
 
 
@@ -15,5 +17,14 @@ public class Rook extends Piece {
     @Override
     public String getSymbol() {
         return "R";
+    }
+
+    @Override
+    public Texture getTexture() {
+        if(this.getColour() == PieceColour.BLACK) {
+            return new Texture("black_rook.png");
+        } else {
+            return new Texture("white_rook.png");
+        }
     }
 }

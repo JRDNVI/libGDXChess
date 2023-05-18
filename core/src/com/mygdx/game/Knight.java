@@ -1,5 +1,7 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.graphics.Texture;
+
 public class Knight extends Piece {
 
 
@@ -15,5 +17,14 @@ public class Knight extends Piece {
     @Override
     public String getSymbol() {
         return "N";
+    }
+
+    @Override
+    public Texture getTexture() {
+        if(this.getColour() == PieceColour.BLACK) {
+            return new Texture("black_knight.png");
+        } else {
+            return new Texture("white_knight.png");
+        }
     }
 }

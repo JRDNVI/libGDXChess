@@ -47,8 +47,8 @@ public class ChessBoard {
         return board[row][col];
     }
 
-    public Piece setPiece(int row, int col) {
-        return board[row][col];
+    public Piece setPiece(int row, int col, Piece piece) {
+        return board[row][col] = piece;
     }
 
 

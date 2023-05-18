@@ -1,5 +1,7 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.graphics.Texture;
+
 public abstract class Piece {
     private PieceColour colour;
 
@@ -18,4 +20,6 @@ public abstract class Piece {
     public abstract boolean isValidMove(int sourceRow, int sourceCol, int destRow, int destCol, ChessBoard board);
 
     public abstract String getSymbol();
+
+    public abstract Texture getTexture();
 }
