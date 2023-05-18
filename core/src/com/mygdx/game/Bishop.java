@@ -21,10 +21,29 @@ public class Bishop extends Piece {
             return false; // Bishop cannot take its own team's pieces
         }
 
-        // Check if the move is a valid diagonal movement
+        // Check if the move is a valid diagonal movement without obstacles
         int rowOffset = Math.abs(destRow - sourceRow);
         int colOffset = Math.abs(destCol - sourceCol);
-        return rowOffset == colOffset;
+
+        if (rowOffset != colOffset) {
+            return false; // Not a valid diagonal movement
+        }
+
+        int rowStep = (destRow > sourceRow) ? 1 : -1;
+        int colStep = (destCol > sourceCol) ? 1 : -1;
+
+        int currentRow = sourceRow + rowStep;
+        int currentCol = sourceCol + colStep;
+
+        while (currentRow != destRow && currentCol != destCol) {
+            if (board.getPiece(currentRow, currentCol) != null) {
+                return false; // Obstacle found, invalid move
+            }
+            currentRow += rowStep;
+            currentCol += colStep;
+        }
+
+        return true; // Valid diagonal movement without obstacles
     }
 
     @Override

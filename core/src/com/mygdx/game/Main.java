@@ -16,6 +16,7 @@ public class Main extends ApplicationAdapter {
     private int selectedRow = -1;
     private int selectedCol = -1;
     private Vector2 touchOffset = new Vector2();
+    private boolean whitesTurn = true;
 
     @Override
     public void create() {
@@ -43,7 +44,6 @@ public class Main extends ApplicationAdapter {
                 }
             }
         }
-
         batch.end();
     }
 
@@ -54,7 +54,7 @@ public class Main extends ApplicationAdapter {
 
             // Convert the touch coordinates to board indices
             int row = (int) (touchY / 62.5f);
-            int col = (int) (touchX / 62.5f);
+            int col = (int) (touchX / 64.5f);
 
             // Check if the touch is within the board boundaries
             if (row >= 0 && row < 8 && col >= 0 && col < 8) {
@@ -81,12 +81,6 @@ public class Main extends ApplicationAdapter {
                 }
             }
         }
-    }
-
-    private boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
-        // Add your logic here to determine if the move is valid
-        // You can check the piece type, current position, destination position, etc.
-        return true; // Replace with your own implementation
     }
 
     @Override
