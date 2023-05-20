@@ -44,6 +44,11 @@ public class Rook extends Piece {
     }
 
     @Override
+    public int pieceValue() {
+        return 5;
+    }
+
+    @Override
     public Texture getTexture() {
         if (this.getColour() == PieceColour.BLACK) {
             return new Texture("black_rook.png");

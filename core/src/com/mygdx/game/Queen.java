@@ -4,7 +4,6 @@ import com.badlogic.gdx.graphics.Texture;
 
 public class Queen extends Piece {
 
-
     public Queen(PieceColour colour) {
         super(colour);
     }
@@ -71,6 +70,11 @@ public class Queen extends Piece {
     @Override
     public String getSymbol() {
         return "Q";
+    }
+
+    @Override
+    public int pieceValue() {
+        return 9;
     }
 
     @Override

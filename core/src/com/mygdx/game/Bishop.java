@@ -2,6 +2,9 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Texture;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Bishop extends Piece {
 
     public Bishop(PieceColour colour) {
@@ -10,15 +13,19 @@ public class Bishop extends Piece {
 
     @Override
     public boolean isValidMove(int sourceRow, int sourceCol, int destRow, int destCol, ChessBoard board) {
+        int rowStep = (destRow > sourceRow) ? 1 : -1;
+        int colStep = (destCol > sourceCol) ? 1 : -1;
+        int currentRow = sourceRow + rowStep;
+        int currentCol = sourceCol + colStep;
+        Piece destinationPiece = board.getPiece(destRow, destCol);
+
         if (sourceRow == destRow || sourceCol == destCol) {
             return false; // Bishop can only move diagonally
         }
 
-        Piece destinationPiece = board.getPiece(destRow, destCol);
-
         // Check if destination is occupied by a piece of the same color
         if (destinationPiece != null && destinationPiece.getColour() == this.getColour()) {
-            return false; // Bishop cannot take its own team's pieces
+            return false;
         }
 
         // Check if the move is a valid diagonal movement without obstacles
@@ -26,17 +33,13 @@ public class Bishop extends Piece {
         int colOffset = Math.abs(destCol - sourceCol);
 
         if (rowOffset != colOffset) {
-            return false; // Not a valid diagonal movement
+            return false;
         }
 
-        int rowStep = (destRow > sourceRow) ? 1 : -1;
-        int colStep = (destCol > sourceCol) ? 1 : -1;
-
-        int currentRow = sourceRow + rowStep;
-        int currentCol = sourceCol + colStep;
-
         while (currentRow != destRow && currentCol != destCol) {
+            // System.out.println(currentRow + " " + currentCol);
             if (board.getPiece(currentRow, currentCol) != null) {
+
                 return false; // Obstacle found, invalid move
             }
             currentRow += rowStep;
@@ -49,6 +52,11 @@ public class Bishop extends Piece {
     @Override
     public String getSymbol() {
         return "B";
+    }
+
+    @Override
+    public int pieceValue() {
+        return 3;
     }
 
     @Override

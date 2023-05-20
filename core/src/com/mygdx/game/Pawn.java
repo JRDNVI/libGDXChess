@@ -8,7 +8,6 @@ import java.util.List;
 
 public class Pawn extends Piece {
 
-
     public Pawn(PieceColour colour) {
         super(colour);
     }
@@ -16,28 +15,29 @@ public class Pawn extends Piece {
     @Override
     public boolean isValidMove(int sourceRow, int sourceCol, int destRow, int destCol, ChessBoard board) {
         Piece destinationPiece = board.getPiece(destRow, destCol);
+        Piece piece = board.getPiece(sourceRow, sourceCol);
+        PieceColour pieceColour = this.getColour();
+
         if (sourceCol == destCol) {
-            // Moving forward
-            if (this.getColour() == PieceColour.BLACK && destRow == sourceRow + 1 && destinationPiece == null) {
+            // Moving vertically
+            int rowOffset = pieceColour == PieceColour.BLACK ? 1 : -1;
+
+            // Moving one square forward
+            if (destRow == sourceRow + rowOffset && destinationPiece == null ) {
                 return true;
             }
-            // Moving forward two squares from initial position
-            else if (this.getColour() == PieceColour.BLACK && sourceRow == 1 && destRow == 3 && destinationPiece == null && board.getPiece(2, destCol) == null) {
+
+            // Moving two squares forward from initial position
+            if (sourceRow == (pieceColour == PieceColour.BLACK ? 1 : 6) && destRow == sourceRow + 2 * rowOffset && destinationPiece == null && board.getPiece(sourceRow + rowOffset, destCol) == null) {
                 return true;
             }
-            // Moving forward
-            else if (this.getColour() == PieceColour.WHITE && destRow == sourceRow - 1 && destinationPiece == null) {
-                return true;
-            }
-            // Moving forward two squares from initial position
-            else
-                return this.getColour() == PieceColour.WHITE && sourceRow == 6 && destRow == 4 && destinationPiece == null && board.getPiece(5, destCol) == null;
         } else if (Math.abs(sourceCol - destCol) == 1) {
             // Capturing diagonally
-            if (this.getColour() == PieceColour.BLACK && destRow == sourceRow + 1 && destinationPiece != null && destinationPiece.getColour() == PieceColour.WHITE) {
+            int rowOffset = pieceColour == PieceColour.BLACK ? 1 : -1;
+
+            if (destRow == sourceRow + rowOffset && destinationPiece != null && destinationPiece.getColour() != pieceColour) {
                 return true;
-            } else
-                return this.getColour() == PieceColour.WHITE && destRow == sourceRow - 1 && destinationPiece != null && destinationPiece.getColour() == PieceColour.BLACK;
+            }
         }
 
         return false;
@@ -45,7 +45,12 @@ public class Pawn extends Piece {
 
     @Override
     public String getSymbol() {
-        return "P";
+        return "";
+    }
+
+    @Override
+    public int pieceValue() {
+        return 1;
     }
 
     @Override

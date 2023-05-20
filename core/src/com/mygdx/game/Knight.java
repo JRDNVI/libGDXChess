@@ -4,7 +4,6 @@ import com.badlogic.gdx.graphics.Texture;
 
 public class Knight extends Piece {
 
-
     public Knight(PieceColour colour) {
         super(colour);
     }
@@ -20,7 +19,6 @@ public class Knight extends Piece {
             // Check if the destination is not occupied by a piece of the same color
             return destinationPiece == null || destinationPiece.getColour() != this.getColour();
         }
-
         return false;
     }
 
@@ -28,6 +26,12 @@ public class Knight extends Piece {
     public String getSymbol() {
         return "N";
     }
+
+    @Override
+    public int pieceValue() {
+        return 3;
+    }
+
 
     @Override
     public Texture getTexture() {
