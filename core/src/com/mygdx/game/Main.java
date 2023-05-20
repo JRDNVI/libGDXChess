@@ -69,11 +69,11 @@ public class Main extends ApplicationAdapter {
             font.draw(batch, "Played Moves:", 510, 490); // Adjust the position as needed
 
             List<String> moves = new ArrayList<>();
-            for(Piece piece : capturedPieces) {
+            for (Piece piece : capturedPieces) {
                 String move = piece.shortString();
                 moves.add(move);
             }
-            for(int i = 0; i < capturedPieces.size(); i++) {
+            for (int i = 0; i < capturedPieces.size(); i++) {
                 for (String move : moves) {
                     font.draw(batch, move, 510, 490 - 20); // Adjust the position as needed
                 }
@@ -88,67 +88,111 @@ public class Main extends ApplicationAdapter {
             float touchX = Gdx.input.getX();
             float touchY = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-            // Convert the touch coordinates to board indices
             int col = (int) (touchX / 62.5f);
             int row = (int) (touchY / 62.5f);
 
-            // Check if the touch is within the board boundaries
-            if (row >= 0 && row < 8 && col >= 0 && col < 8) {
-                // Check if a piece is already selected
+            if (chessBoard.isValidPosition(row, col)) {
                 if (selectedRow == -1 && selectedCol == -1) {
-                    // Select the piece if it exists
-                    Piece selectedPiece = chessBoard.getPiece(row, col);
-                    System.out.println(selectedPiece);
-                    if (selectedPiece != null) {
-                        selectedRow = row;
-                        selectedCol = col;
-                        touchOffset.set(touchX - col * 62.5f, touchY - row * 62.5f);
-                    }
+                    selectPiece(row, col, touchX, touchY);
                 } else {
-                    // Move the selected piece if the target position is valid
-                    // Perform the move
-                    Piece selectedPiece = chessBoard.getPiece(selectedRow, selectedCol);
-                    Piece pieceCaptured = chessBoard.getPiece(row, col);
-                    if (whitesTurn) {
-                        if (selectedPiece.isValidMove(selectedRow, selectedCol, row, col, chessBoard) && selectedPiece.getColour() == PieceColour.WHITE) {
-                            chessBoard.setPiece(row, col, selectedPiece);
-                            chessBoard.setPiece(selectedRow, selectedCol, null);
-                            if (pieceCaptured != null) {
-                                allPiecesOnBoard.remove(pieceCaptured);
-                                capturedPieces.add(pieceCaptured);
-                                String moveNotation = selectedPiece.getSymbol() + "x" + converter.convertColumnToLetter(col) + row;
-                                chessNotationMoveList.add(moveNotation);
-
-                            } else {
-                                String moveNotation = selectedPiece.getSymbol() +  converter.convertColumnToLetter(col) + row;
-                                chessNotationMoveList.add(moveNotation);
-
-                            }
-                            whitesTurn = false;
-                        }
-                    } else {
-                        if (selectedPiece.isValidMove(selectedRow, selectedCol, row, col, chessBoard) && selectedPiece.getColour() == PieceColour.BLACK) {
-                            chessBoard.setPiece(row, col, selectedPiece);
-                            chessBoard.setPiece(selectedRow, selectedCol, null);
-                            if (pieceCaptured != null) {
-                                allPiecesOnBoard.remove(pieceCaptured);
-                                capturedPieces.add(pieceCaptured);
-                                String moveNotation = selectedPiece.getSymbol() + "x" + converter.convertColumnToLetter(col) + row;
-                                chessNotationMoveList.add(moveNotation);
-                            } else {
-                                String moveNotation = selectedPiece.getSymbol() + converter.convertColumnToLetter(col) + row;
-                                chessNotationMoveList.add(moveNotation);
-                            }
-                            whitesTurn = true;
-                            System.out.println(chessNotationMoveList);
-                        }
-                    }
-                    selectedRow = -1;
-                    selectedCol = -1;
+                    moveSelectedPiece(row, col);
                 }
             }
         }
     }
+
+    private void selectPiece(int row, int col, float touchX, float touchY) {
+        Piece selectedPiece = chessBoard.getPiece(row, col);
+        if (selectedPiece != null) {
+            selectedRow = row;
+            selectedCol = col;
+            touchOffset.set(touchX - col * 62.5f, touchY - row * 62.5f);
+        }
+    }
+
+    private void moveSelectedPiece(int row, int col) {
+        Piece selectedPiece = chessBoard.getPiece(selectedRow, selectedCol);
+        Piece pieceCaptured = chessBoard.getPiece(row, col);
+        System.out.println(selectedPiece);
+
+        if ((whitesTurn && selectedPiece.getColour() == PieceColour.WHITE) ||
+                (!whitesTurn && selectedPiece.getColour() == PieceColour.BLACK)) {
+            if (selectedPiece.isValidMove(selectedRow, selectedCol, row, col, chessBoard)) {
+                chessBoard.setPiece(row, col, selectedPiece);
+                chessBoard.setPiece(selectedRow, selectedCol, null);
+
+                if (pieceCaptured != null) {
+                    allPiecesOnBoard.remove(pieceCaptured);
+                    capturedPieces.add(pieceCaptured);
+                    String moveNotation = selectedPiece.getSymbol() + "x" + converter.convertColumnToLetter(col) + row;
+                    chessNotationMoveList.add(moveNotation);
+                } else {
+                    String moveNotation = selectedPiece.getSymbol() + converter.convertColumnToLetter(col) + row;
+                    chessNotationMoveList.add(moveNotation);
+                }
+
+                whitesTurn = !whitesTurn;
+                System.out.println(chessNotationMoveList);
+            }
+        }
+
+        selectedRow = -1;
+        selectedCol = -1;
+    }
+
+    private boolean isCheckmate(ChessBoard board, PieceColour currentPlayerColour) {
+        King currentPlayerKing = findCurrentPlayerKing(board, currentPlayerColour);
+
+        if (isKingInCheck(currentPlayerKing, board)) {
+            for (Piece piece : allPiecesOnBoard) {
+                if (piece.getColour() == currentPlayerColour) {
+                    for (Move move : piece.getValidMoveList()) {
+                        int destRow = move.getRow();
+                        int destCol = move.getCol();
+                        ChessBoard hypotheticalBoard = createHypotheticalBoard(board, piece, destRow, destCol);
+
+                        if (!isKingInCheck(currentPlayerKing, hypotheticalBoard)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private King findCurrentPlayerKing(ChessBoard board, PieceColour currentPlayerColour) {
+        for (Piece piece : allPiecesOnBoard) {
+            if (piece instanceof King && piece.getColour() == currentPlayerColour) {
+                return (King) piece;
+            }
+        }
+        return null;
+    }
+
+    private boolean isKingInCheck(King king, ChessBoard board) {
+        for (Piece piece : allPiecesOnBoard) {
+            if (piece.getColour() != king.getColour()) {
+                if (piece.isValidMove(piece.getRow(), piece.getCol(), king.getRow(), king.getCol(), board)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private ChessBoard createHypotheticalBoard(ChessBoard board, Piece piece, int destRow, int destCol) {
+        ChessBoard hypotheticalBoard = board.copy();
+        hypotheticalBoard.setPiece(destRow, destCol, piece);
+        hypotheticalBoard.setPiece(piece.getRow(), piece.getCol(), null);
+        return hypotheticalBoard;
+    }
+
+    // ...existing code...
+
+}
 
     @Override
     public void dispose() {

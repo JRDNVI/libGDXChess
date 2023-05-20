@@ -7,7 +7,6 @@ import java.util.List;
 public class ChessBoard {
     private final Piece[][] board;
     private static List<Piece> allPiecesOnBoard = new ArrayList<>();
-    
 
     public ChessBoard() {
         board = new Piece[8][8];
