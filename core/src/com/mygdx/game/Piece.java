@@ -15,6 +15,7 @@ public abstract class Piece {
         this.colour = colour;
     }
 
+
     public void findValidMovesAndDamageSquares(int sourceRow, int sourceCol, ChessBoard board) {
         Piece startPiece = board.getPiece(sourceRow, sourceCol);
         startPiece.getValidMoveList().clear(); // Clear the previous list of valid moves
@@ -26,8 +27,8 @@ public abstract class Piece {
                     continue;
                 }
                 Piece destPiece = board.getPiece(destRow, destCol);
-                Move move = new Move(destCol, destRow);
-                DamageSquare damageSquare = new DamageSquare(destCol, destRow);
+                Move move = new Move(destRow, destCol);
+                DamageSquare damageSquare = new DamageSquare(destRow, destCol);
                 if (startPiece.isValidMove(sourceRow, sourceCol, destRow, destCol, board)) {
                     if(destPiece == null) {
                         startPiece.getValidMoveList().add(move);
@@ -64,7 +65,6 @@ public abstract class Piece {
     }
 
     public abstract boolean isValidMove(int sourceRow, int sourceCol, int destRow, int destCol, ChessBoard board);
-
 
     public abstract String getSymbol();
 

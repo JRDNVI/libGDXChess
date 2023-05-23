@@ -4,7 +4,7 @@ public class Move {
     private int col;
     private int row;
 
-    public Move(int col, int row ) {
+    public Move(int row, int col ) {
         this.col = col;
         this.row = row;
     }
@@ -27,8 +27,7 @@ public class Move {
 
     @Override
     public String toString() {
-        return " col: " + col +
-                " row: " + row + " ";
-                //", piece=" + piece +;
+        return " row: " + row +
+                " col: " + col + " ";
     }
 }

@@ -48,6 +48,49 @@ public class ChessBoard {
             }
             System.out.println(); // Add a line break after each row
         }
+        System.out.println();
+    }
+
+    public ChessBoard copyBoard(ChessBoard originalBoard) {
+        ChessBoard copiedBoard = new ChessBoard();
+
+        // Iterate over the rows and columns of the original board
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                // Get the piece at the current position on the original board
+                Piece originalPiece = originalBoard.getPiece(row, col);
+
+                if (originalPiece != null) {
+                    // Create a new instance of the same piece type with the same color
+                    Piece copiedPiece;
+                    if (originalPiece instanceof Pawn) {
+                        copiedPiece = new Pawn(originalPiece.getColour());
+                    } else if (originalPiece instanceof King) {
+                        copiedPiece = new King(originalPiece.getColour());
+                    } else if (originalPiece instanceof Queen) {
+                        copiedPiece = new Queen(originalPiece.getColour());
+                    } else if (originalPiece instanceof Bishop) {
+                        copiedPiece = new Bishop(originalPiece.getColour());
+                        copiedPiece.setDamageSquares(originalPiece.getDamageSquares());
+                    } else if (originalPiece instanceof Knight) {
+                        copiedPiece = new Knight(originalPiece.getColour());
+                    } else if (originalPiece instanceof Rook) {
+                        copiedPiece = new Rook(originalPiece.getColour());
+                    } else {
+                        // Handle any other custom piece types if necessary
+                        copiedPiece = null; // Or create a default piece instance
+                    }
+
+                    // Set the copied piece on the corresponding position of the copied board
+                    copiedBoard.setPiece(row, col, copiedPiece);
+                } else {
+                    // If the original position is empty, set it as empty on the copied board as well
+                    copiedBoard.setPiece(row, col, null);
+                }
+            }
+        }
+
+        return copiedBoard;
     }
 
     public Piece getPiece(int row, int col) {

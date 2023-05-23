@@ -45,7 +45,7 @@ public class Pawn extends Piece {
 
     @Override
     public String getSymbol() {
-        return "";
+        return "P";
     }
 
     @Override

@@ -2,6 +2,9 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Texture;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class King extends Piece {
 
 
@@ -14,14 +17,13 @@ public class King extends Piece {
         int rowOffset = Math.abs(destRow - sourceRow);
         int colOffset = Math.abs(destCol - sourceCol);
         Piece king = board.getPiece(sourceRow, sourceCol);
-        DamageSquare damageSquare = new DamageSquare(destCol, destRow);
 
         // Check if the destination is within one square in any direction
         if ((rowOffset == 1 && colOffset <= 1) || (colOffset == 1 && rowOffset <= 1)) {
             Piece destinationPiece = board.getPiece(destRow, destCol);
-            return destinationPiece == null || destinationPiece.getColour() != this.getColour();
+            return destinationPiece == null || destinationPiece.getColour() != king.getColour(); // Move is valid
         }
-        return false;
+        return false; // Move is not valid
     }
 
     @Override
