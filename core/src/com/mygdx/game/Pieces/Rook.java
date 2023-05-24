@@ -1,6 +1,7 @@
-package com.mygdx.game;
+package com.mygdx.game.Pieces;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.mygdx.game.Chessboard.ChessBoard;
 
 public class Rook extends Piece {
 

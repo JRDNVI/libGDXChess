@@ -1,7 +1,8 @@
-package com.mygdx.game;
+package com.mygdx.game.Chessboard;
+
+import com.mygdx.game.Pieces.*;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
 
 public class ChessBoard {

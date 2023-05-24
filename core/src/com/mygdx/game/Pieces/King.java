@@ -1,9 +1,7 @@
-package com.mygdx.game;
+package com.mygdx.game.Pieces;
 
 import com.badlogic.gdx.graphics.Texture;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.mygdx.game.Chessboard.ChessBoard;
 
 public class King extends Piece {
 

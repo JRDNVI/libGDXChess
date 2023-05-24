@@ -1,9 +1,7 @@
-package com.mygdx.game;
+package com.mygdx.game.Pieces;
 
 import com.badlogic.gdx.graphics.Texture;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.mygdx.game.Chessboard.ChessBoard;
 
 public class Bishop extends Piece {
 
@@ -27,7 +25,6 @@ public class Bishop extends Piece {
         if (destinationPiece != null && destinationPiece.getColour() == this.getColour()) {
             return false;
         }
-
         // Check if the move is a valid diagonal movement without obstacles
         int rowOffset = Math.abs(destRow - sourceRow);
         int colOffset = Math.abs(destCol - sourceCol);

@@ -1,6 +1,9 @@
-package com.mygdx.game;
+package com.mygdx.game.Pieces;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.mygdx.game.Chessboard.ChessBoard;
+import com.mygdx.game.Chessboard.DamageSquare;
+import com.mygdx.game.Chessboard.Move;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,18 +2,21 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.ScreenUtils;
+import com.mygdx.game.Chessboard.ChessBoard;
+import com.mygdx.game.Chessboard.DamageSquare;
+import com.mygdx.game.Chessboard.Move;
+import com.mygdx.game.Pieces.King;
+import com.mygdx.game.Pieces.Piece;
+import com.mygdx.game.Pieces.PieceColour;
+import com.mygdx.game.Utities.ChessNotationConverter;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
@@ -127,7 +130,7 @@ public class Main extends ApplicationAdapter {
 
         if ((whitesTurn && selectedPiece.getColour() == PieceColour.WHITE) || (!whitesTurn && selectedPiece.getColour() == PieceColour.BLACK)) {
             if (selectedPiece.isValidMove(selectedRow, selectedCol, row, col, chessBoard)) {
-                if (!isStillInCheck(row, col, selectedRow, selectedCol)) {
+                if (!isStillInCheck(row, col)) {
                     chessBoard.setPiece(row, col, selectedPiece);
                     chessBoard.setPiece(selectedRow, selectedCol, null);
 
@@ -143,7 +146,7 @@ public class Main extends ApplicationAdapter {
 
                     findKings(chessBoard);
                     findValidMovesAndDamageSquares(chessBoard);
-                    check = isKingInCheck(kingLocations, chessBoard);
+                    check = isKingInCheck(kingLocations, chessBoard, row, col);
                     System.out.println(chessNotationMoveList);
                     whitesTurn = !whitesTurn;
 
@@ -158,74 +161,42 @@ public class Main extends ApplicationAdapter {
         selectedCol = -1;
     }
 
-    public boolean isStillInCheck(int newRow, int newCol, int prevRow, int prevCol) {
+    public boolean isStillInCheck(int newRow, int newCol) {
         if (check) {
             if (whiteInCheck) {
                 ChessBoard boardNextMove = chessBoard.copyBoard(chessBoard);
-                findKings(boardNextMove);
-                DamageSquare damageSquare = new DamageSquare(newRow, newCol);
-                Piece whiteKing = boardNextMove.getPiece(kingLocations.get(0), kingLocations.get(1));
-                boardNextMove.setPiece(newRow, newCol, whiteKing);
-                boardNextMove.setPiece(prevRow, prevCol, null);
+                Piece piece = boardNextMove.getPiece(selectedRow, selectedCol);
+
+                boardNextMove.setPiece(newRow, newCol, piece);
+                boardNextMove.setPiece(selectedRow, selectedCol, null);
                 findValidMovesAndDamageSquares(boardNextMove);
-                for (int x = 0; x < 8; x++) {
-                    for (int y = 0; y < 8; y++) {
-                        Piece piece = boardNextMove.getPiece(x, y);
-                        if (piece != null) {
-                            if (piece.getDamageSquares().contains(damageSquare)) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-                // boardNextMove.setPiece(newRow, newCol);
+                findKings(boardNextMove);
+
                 boardNextMove.currentWorldState(boardNextMove);
+                // Check if any piece can block the check or capture the attacking piece
+                return isKingInCheck(kingLocations, boardNextMove, newRow, newCol);
+
+
             }
         }
         return false;
     }
 
-//    public boolean validMoveAfterCheck(int row, int col, int selectedRow, int selectedCol) {
-//        if (check) {
-//            if (whiteInCheck) {
-//                int whiteKingCol = kingLocations.get(0);
-//                int whiteKingRow = kingLocations.get(1);
-//                Piece whiteKing = chessBoard.getPiece(whiteKingCol, whiteKingRow);
-//
-//                // Create a copy of the chess board
-//                ChessBoard copiedBoard = chessBoard.copyBoard(chessBoard);
-//                // Set the intended move in the copied board
-//                copiedBoard.setPiece(row, col, whiteKing);
-//                copiedBoard.setPiece(selectedRow, selectedCol, null);
-//                copiedBoard.currentWorldState(boardCurrentPosition);
-//                findKings(boardCurrentPosition);
-//                findValidMovesAndDamageSquares(boardCurrentPosition);
-//
-//
-//
-//                // Check if the king is still in check on the copied board
-//                boolean stillInCheck = isKingInCheck(kingLocations, boardCurrentPosition);
-//                System.out.println(stillInCheck);
-//                // The move is not valid
-//                if (stillInCheck) {
-//                    return false;
-//                }
-//            } else if (blackInCheck) {
-//                return true;
-//            }
-//        }
-//        return true;
-//    }
-
-    public boolean isKingInCheck(List<Integer> kingLocations, ChessBoard board) {
+    public boolean isKingInCheck(List<Integer> kingLocations, ChessBoard board, int newRow, int newCol) {
+        int whiteKingRow = kingLocations.get(0);
+        int whiteKingCol = kingLocations.get(1);
+        int blackKingRow = kingLocations.get(2);
+        int blackKingCol = kingLocations.get(3);
         DamageSquare whiteKingSquare = new DamageSquare(kingLocations.get(0), kingLocations.get(1));
         DamageSquare blackKingSquare = new DamageSquare(kingLocations.get(2), kingLocations.get(3));
+        Move newSquare = new Move(newRow, newCol);
+        System.out.println(newSquare);
 
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 Piece piece = board.getPiece(x, y);
-                if (piece != null) {
-                    if (piece.getDamageSquares().contains(whiteKingSquare)) {
+                if (piece != null && piece.getColour() == PieceColour.BLACK) {
+                    if (piece.getDamageSquares().contains(whiteKingSquare) || piece.getValidMoveList().contains(new Move(whiteKingRow, whiteKingCol)) ) {
                         System.out.println("White King is in check");
                         whiteInCheck = true;
                         return true;
