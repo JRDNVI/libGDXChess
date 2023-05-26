@@ -24,7 +24,6 @@ public class Main extends ApplicationAdapter {
     private Texture background;
 
     private ChessBoard chessBoard;
-    private ChessBoard boardCurrentPosition;
     private int selectedRow = -1;
     private int selectedCol = -1;
 
@@ -56,14 +55,10 @@ public class Main extends ApplicationAdapter {
     @Override
     public void render() {
         handleInput();
-
         Gdx.gl.glClearColor(1, 1, 1, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
-
-        batch.draw(background, 0, 0, 1000, 1000); // Adjust the coordinates and size as needed
-
-        // Draw the chessboard
+        batch.draw(background, 0, 0, 1000, 1000);
         batch.draw(img, 0, 0, 500, 500);
 
         for (int row = 0; row < 8; row++) {
@@ -73,19 +68,19 @@ public class Main extends ApplicationAdapter {
                     batch.draw(piece.getTexture(), col * 62.5f + 6.25f, row * 62.5f + 6.25f, 50.5f, 50.5f);
                 }
             }
-            font.draw(batch, "Played Moves:", 510, 490); // Adjust the position as needed
 
+            font.draw(batch, "Played Moves:", 510, 490);
             List<String> moves = new ArrayList<>();
             for (Piece piece : capturedPieces) {
                 String move = piece.shortString();
                 moves.add(move);
             }
+
             for (int i = 0; i < capturedPieces.size(); i++) {
                 for (String move : moves) {
-                    font.draw(batch, move, 510, 490 - 20); // Adjust the position as needed
+                    font.draw(batch, move, 510, 490 - 20);
                 }
             }
-
         }
         batch.end();
     }
@@ -111,15 +106,9 @@ public class Main extends ApplicationAdapter {
     private void selectPiece(int row, int col, float touchX, float touchY) {
         Piece selectedPiece = chessBoard.getPiece(row, col);
         if (selectedPiece != null) {
-//            if(!check) {
-//                selectedRow = row;
-//                selectedCol = col;
-//                touchOffset.set(touchX - col * 62.5f, touchY - row * 62.5f);
-//            } else if(selectedPiece instanceof King) {
             selectedRow = row;
             selectedCol = col;
             touchOffset.set(touchX - col * 62.5f, touchY - row * 62.5f);
-            // }
         }
     }
 
@@ -145,12 +134,13 @@ public class Main extends ApplicationAdapter {
                     }
 
                     findKings(chessBoard);
-                    findValidMovesAndDamageSquares(chessBoard);
-                    check = isKingInCheck(kingLocations, chessBoard, row, col);
+                    chessBoard.findValidMovesAndDamageSquares(chessBoard);
+                    check = isKingInCheck(kingLocations, chessBoard);
+                    if (check && isCheckmate()) {
+                        System.out.println("checkmate");
+                    }
                     System.out.println(chessNotationMoveList);
                     whitesTurn = !whitesTurn;
-
-                    boardCurrentPosition = chessBoard.copyBoard(chessBoard);
                 } else {
                     System.out.println("Invalid move: King in check");
                 }
@@ -161,46 +151,16 @@ public class Main extends ApplicationAdapter {
         selectedCol = -1;
     }
 
-    public boolean isStillInCheck(int newRow, int newCol) {
-        if (check) {
-            if (whiteInCheck) {
-                ChessBoard boardNextMove = chessBoard.copyBoard(chessBoard);
-                Piece piece = boardNextMove.getPiece(selectedRow, selectedCol);
-
-                boardNextMove.setPiece(newRow, newCol, piece);
-                boardNextMove.setPiece(selectedRow, selectedCol, null);
-                findValidMovesAndDamageSquares(boardNextMove);
-                findKings(boardNextMove);
-
-                boardNextMove.currentWorldState(boardNextMove);
-                // Check if any piece can block the check or capture the attacking piece
-                return isKingInCheck(kingLocations, boardNextMove, newRow, newCol);
-
-
-            }
-        }
-        return false;
-    }
-
-    public boolean isKingInCheck(List<Integer> kingLocations, ChessBoard board, int newRow, int newCol) {
-        int whiteKingRow = kingLocations.get(0);
-        int whiteKingCol = kingLocations.get(1);
-        int blackKingRow = kingLocations.get(2);
-        int blackKingCol = kingLocations.get(3);
-        DamageSquare whiteKingSquare = new DamageSquare(kingLocations.get(0), kingLocations.get(1));
-        DamageSquare blackKingSquare = new DamageSquare(kingLocations.get(2), kingLocations.get(3));
-        Move newSquare = new Move(newRow, newCol);
-        System.out.println(newSquare);
-
+    public boolean isKingInCheck(List<Integer> kingLocations, ChessBoard board) {
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 Piece piece = board.getPiece(x, y);
-                if (piece != null && piece.getColour() == PieceColour.BLACK) {
-                    if (piece.getDamageSquares().contains(whiteKingSquare) || piece.getValidMoveList().contains(new Move(whiteKingRow, whiteKingCol)) ) {
+                if (piece != null) {
+                    if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(0), kingLocations.get(1))) || piece.getValidMoveList().contains(new Move(kingLocations.get(0), kingLocations.get(1), -1, -1))) {
                         System.out.println("White King is in check");
                         whiteInCheck = true;
                         return true;
-                    } else if (piece.getDamageSquares().contains(blackKingSquare)) {
+                    } else if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(2), kingLocations.get(3))) || piece.getValidMoveList().contains(new Move(kingLocations.get(2), -1, kingLocations.get(3), -1))) {
                         System.out.println("Black king is in Check");
                         blackInCheck = true;
                         return true;
@@ -208,10 +168,55 @@ public class Main extends ApplicationAdapter {
                 }
             }
         }
+
         System.out.println("King not in check");
         return false;
-
     }
+
+    private boolean isCheckmate() {
+        ChessBoard testCheckmateBoard = chessBoard.copyBoard(chessBoard);
+        testCheckmateBoard.findValidMovesAndDamageSquares(testCheckmateBoard);
+        findKings(testCheckmateBoard);
+        List<Piece> piecesToMove = new ArrayList<>();
+        int numberOfMovesNotInCheck = 0;
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = chessBoard.getPiece(row, col);
+                if (piece != null && piece.getColour() == (whiteInCheck ? PieceColour.WHITE : PieceColour.BLACK) && piece.getValidMoveList().size() != 0) {
+                    piecesToMove.add(piece);
+                }
+            }
+        }
+        for (Piece piece : piecesToMove) {
+            if (piece.getValidMoveList().size() != 0 && piece.getColour() == PieceColour.WHITE) {
+                List<Move> piecesValidMoves = piece.getValidMoveList();
+                for (Move move : piecesValidMoves) {
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
+                    findKings(testCheckmateBoard);
+
+                    testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                    if (!isKingInCheck(kingLocations, testCheckmateBoard)) {
+                        numberOfMovesNotInCheck++;
+                    }
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
+                }
+            }
+        }
+        return numberOfMovesNotInCheck == 0;
+    }
+
+    public boolean isStillInCheck(int newRow, int newCol) {
+        if (check) {
+            ChessBoard boardNextMove = chessBoard.copyBoard(chessBoard);
+            boardNextMove = boardNextMove.makeMove(boardNextMove, newRow, newCol, selectedRow, selectedCol);
+            boardNextMove.currentWorldState(boardNextMove);
+            findKings(boardNextMove);
+            return isKingInCheck(kingLocations, boardNextMove);
+        }
+        return false;
+    }
+
 
     private void findKings(ChessBoard chessBoard) {
         int whiteKingRow = -1;
@@ -233,7 +238,6 @@ public class Main extends ApplicationAdapter {
                 }
             }
         }
-
         kingLocations.clear();
         kingLocations.add(whiteKingRow);
         kingLocations.add(whiteKingCol);
@@ -242,16 +246,6 @@ public class Main extends ApplicationAdapter {
         System.out.println(kingLocations);
     }
 
-    private void findValidMovesAndDamageSquares(ChessBoard board) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = board.getPiece(row, col);
-                if (piece != null) {
-                    piece.findValidMovesAndDamageSquares(row, col, board);
-                }
-            }
-        }
-    }
 
     @Override
     public void dispose() {

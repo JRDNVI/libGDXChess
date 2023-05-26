@@ -40,6 +40,14 @@ public class ChessBoard {
         }
     }
 
+    public ChessBoard makeMove(ChessBoard board, int newRow, int newCol, int prevRow, int prevCol) {
+        Piece piece = board.getPiece(prevRow, prevCol);
+        board.setPiece(newRow, newCol, piece);
+        board.setPiece(prevRow, prevCol, null);
+        board.findValidMovesAndDamageSquares(board);
+        return board;
+    }
+
     public void currentWorldState(ChessBoard board) {
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
@@ -47,7 +55,7 @@ public class ChessBoard {
                 String symbol = (piece != null) ? piece.getSymbol() : " ";
                 System.out.print(symbol + " ");
             }
-            System.out.println(); // Add a line break after each row
+            System.out.println();
         }
         System.out.println();
     }
@@ -55,14 +63,11 @@ public class ChessBoard {
     public ChessBoard copyBoard(ChessBoard originalBoard) {
         ChessBoard copiedBoard = new ChessBoard();
 
-        // Iterate over the rows and columns of the original board
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                // Get the piece at the current position on the original board
                 Piece originalPiece = originalBoard.getPiece(row, col);
 
                 if (originalPiece != null) {
-                    // Create a new instance of the same piece type with the same color
                     Piece copiedPiece;
                     if (originalPiece instanceof Pawn) {
                         copiedPiece = new Pawn(originalPiece.getColour());
@@ -72,26 +77,31 @@ public class ChessBoard {
                         copiedPiece = new Queen(originalPiece.getColour());
                     } else if (originalPiece instanceof Bishop) {
                         copiedPiece = new Bishop(originalPiece.getColour());
-                        copiedPiece.setDamageSquares(originalPiece.getDamageSquares());
                     } else if (originalPiece instanceof Knight) {
                         copiedPiece = new Knight(originalPiece.getColour());
                     } else if (originalPiece instanceof Rook) {
                         copiedPiece = new Rook(originalPiece.getColour());
                     } else {
-                        // Handle any other custom piece types if necessary
-                        copiedPiece = null; // Or create a default piece instance
+                        copiedPiece = null;
                     }
-
-                    // Set the copied piece on the corresponding position of the copied board
                     copiedBoard.setPiece(row, col, copiedPiece);
                 } else {
-                    // If the original position is empty, set it as empty on the copied board as well
                     copiedBoard.setPiece(row, col, null);
                 }
             }
         }
-
         return copiedBoard;
+    }
+
+    public void findValidMovesAndDamageSquares(ChessBoard board) {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece != null) {
+                    piece.findValidMovesAndDamageSquares(row, col, board);
+                }
+            }
+        }
     }
 
     public Piece getPiece(int row, int col) {

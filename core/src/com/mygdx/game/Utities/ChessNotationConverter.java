@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ChessNotationConverter {
-    private Map<Integer, Character> columnToLetter;
+    private final Map<Integer, Character> columnToLetter;
 
     public ChessNotationConverter() {
         columnToLetter = new HashMap<>();

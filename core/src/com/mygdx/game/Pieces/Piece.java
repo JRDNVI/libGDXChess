@@ -30,7 +30,7 @@ public abstract class Piece {
                     continue;
                 }
                 Piece destPiece = board.getPiece(destRow, destCol);
-                Move move = new Move(destRow, destCol);
+                Move move = new Move(sourceRow, sourceCol, destRow, destCol);
                 DamageSquare damageSquare = new DamageSquare(destRow, destCol);
                 if (startPiece.isValidMove(sourceRow, sourceCol, destRow, destCol, board)) {
                     if(destPiece == null) {
