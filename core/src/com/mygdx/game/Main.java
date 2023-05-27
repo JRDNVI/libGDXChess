@@ -136,6 +136,7 @@ public class Main extends ApplicationAdapter {
                     chessBoard.findValidMovesAndDamageSquares(chessBoard);
                     check = isKingInCheck(kingLocations, chessBoard);
                     pawnPromotion(chessBoard);
+                    whitesTurn = !whitesTurn;
                     if (isStalemate(chessBoard)) {
                         System.out.println("Stalemate");
                     } else {
@@ -147,7 +148,7 @@ public class Main extends ApplicationAdapter {
                         System.out.println("Not Checkmate");
                     }
                     System.out.println(chessNotationMoveList);
-                    whitesTurn = !whitesTurn;
+
                 } else {
                     System.out.println("Invalid move: King in check");
                 }
@@ -267,7 +268,8 @@ public class Main extends ApplicationAdapter {
 
     private boolean isStalemate(ChessBoard board) {
         List<Piece> whitePieces = new ArrayList<>();
-        List<Move> piecesValidMoves = new ArrayList<>();
+        List<Piece> blackPieces = new ArrayList<>();
+        List<Move> piecesValidMoves;
 
         int piecesWithNoValidMove = 0;
         int kingsMovesInCheck = 0;
@@ -281,30 +283,56 @@ public class Main extends ApplicationAdapter {
                 Piece piece = board.getPiece(row, col);
                 if (piece != null && piece.getColour() == PieceColour.WHITE) {
                     whitePieces.add(piece);
+                } else if(piece != null && piece.getColour() == PieceColour.BLACK) {
+                    blackPieces.add(piece);
                 }
             }
         }
 
-        numberOfPieces = whitePieces.size();
-
-        for (Piece piece : whitePieces) {
-            if (!(piece instanceof King)) {
-                if (piece.getValidMoveList().isEmpty()) {
-                    piecesWithNoValidMove++;
-                }
-            } else {
-                piecesValidMoves = piece.getValidMoveList();
-                kingsValidMovesSize = piecesValidMoves.size();
-                int validMovesCount = kingsValidMovesSize; // Store the size of piecesValidMoves
-                for (int i = 0; i < validMovesCount; i++) {
-                    Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
-                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
-                    findKings(testCheckmateBoard);
-                    testCheckmateBoard.currentWorldState(testCheckmateBoard);
-                    if (isKingInCheck(kingLocations, testCheckmateBoard)) {
-                        kingsMovesInCheck++;
+        if(!whitesTurn) {
+            numberOfPieces = whitePieces.size();
+            for (Piece piece : whitePieces) {
+                if (!(piece instanceof King)) {
+                    if (piece.getValidMoveList().isEmpty()) {
+                        piecesWithNoValidMove++;
                     }
-                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
+                } else {
+                    piecesValidMoves = piece.getValidMoveList();
+                    kingsValidMovesSize = piecesValidMoves.size();
+                    int validMovesCount = kingsValidMovesSize; // Store the size of piecesValidMoves //TODO I can change int kingValidMoveCount in the for loop to kingsValidMoveSize
+                    for (int i = 0; i < validMovesCount; i++) {
+                        Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
+                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
+                        findKings(testCheckmateBoard);
+                        testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                        if (isKingInCheck(kingLocations, testCheckmateBoard)) {
+                            kingsMovesInCheck++;
+                        }
+                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
+                    }
+                }
+            }
+        } else {
+            numberOfPieces = blackPieces.size();
+            for (Piece piece : blackPieces) {
+                if (!(piece instanceof King)) {
+                    if (piece.getValidMoveList().isEmpty()) {
+                        piecesWithNoValidMove++;
+                    }
+                } else {
+                    piecesValidMoves = piece.getValidMoveList();
+                    kingsValidMovesSize = piecesValidMoves.size();
+                    int validMovesCount = kingsValidMovesSize; // Store the size of piecesValidMoves //TODO I can change int kingValidMoveCount in the for loop to kingsValidMoveSize
+                    for (int i = 0; i < validMovesCount; i++) {
+                        Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
+                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
+                        findKings(testCheckmateBoard);
+                        testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                        if (isKingInCheck(kingLocations, testCheckmateBoard)) {
+                            kingsMovesInCheck++;
+                        }
+                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
+                    }
                 }
             }
         }
