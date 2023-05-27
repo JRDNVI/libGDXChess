@@ -15,14 +15,14 @@ public class ChessBoard {
     }
 
     private void initialiseBoard() {
-        allPiecesOnBoard.add(board[0][0] = new Rook(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][1] = new Knight(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][2] = new Bishop(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][3] = new Queen(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][4] = new King(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][5] = new Bishop(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][6] = new Knight(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][7] = new Rook(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][0] = new Rook(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][1] = new Knight(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][2] = new Bishop(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][3] = new Queen(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][4] = new King(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][5] = new Bishop(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][6] = new Knight(PieceColour.BLACK));
+       allPiecesOnBoard.add(board[0][7] = new Rook(PieceColour.BLACK));
 
 
         allPiecesOnBoard.add(board[7][0] = new Rook(PieceColour.WHITE));

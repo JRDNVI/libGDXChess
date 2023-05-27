@@ -10,10 +10,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.mygdx.game.Chessboard.ChessBoard;
 import com.mygdx.game.Chessboard.DamageSquare;
 import com.mygdx.game.Chessboard.Move;
-import com.mygdx.game.Pieces.King;
-import com.mygdx.game.Pieces.Piece;
-import com.mygdx.game.Pieces.PieceColour;
-import com.mygdx.game.Utities.ChessNotationConverter;
+import com.mygdx.game.Pieces.*;
+import com.mygdx.game.Utilities.ChessNotationConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,6 +116,7 @@ public class Main extends ApplicationAdapter {
         System.out.println(selectedPiece);
 
         if ((whitesTurn && selectedPiece.getColour() == PieceColour.WHITE) || (!whitesTurn && selectedPiece.getColour() == PieceColour.BLACK)) {
+            canPlayerCastle(chessBoard, row, col);
             if (selectedPiece.isValidMove(selectedRow, selectedCol, row, col, chessBoard)) {
                 if (!isStillInCheck(row, col)) {
                     chessBoard.setPiece(row, col, selectedPiece);
@@ -136,8 +135,16 @@ public class Main extends ApplicationAdapter {
                     findKings(chessBoard);
                     chessBoard.findValidMovesAndDamageSquares(chessBoard);
                     check = isKingInCheck(kingLocations, chessBoard);
+                    pawnPromotion(chessBoard);
+                    if (isStalemate(chessBoard)) {
+                        System.out.println("Stalemate");
+                    } else {
+                        System.out.println("Not Stalemate");
+                    }
                     if (check && isCheckmate()) {
                         System.out.println("checkmate");
+                    } else {
+                        System.out.println("Not Checkmate");
                     }
                     System.out.println(chessNotationMoveList);
                     whitesTurn = !whitesTurn;
@@ -149,6 +156,46 @@ public class Main extends ApplicationAdapter {
 
         selectedRow = -1;
         selectedCol = -1;
+    }
+
+    // ------------------------ Logic for game win condition (look for Check, if in checked ensures the next move will prevent check, looks for checkmate) --------------------
+
+    // Step 1 - findkings() locates both kings which provides a List which can be used to check for a win condition or check.
+
+    // Step 2 - isKingInCheck() after every move this method is called and checks if the king locations (obtained in findKings()) are in a damageSquare.
+
+    // Step 3 - isStillInCheck() ensures the next move removes check (simulates the wanted move on a copied chessboard and looks for check).
+
+    // Step 4 - isCheckmate() this creates a list of pieces (colour of which is determined by which colour king is in check) and then loops through every piece's validMoveList which
+    //          contains every possible move by the player in check on a copiedChessboard and checks if the king is in check. If there is at least one move that prevents check then
+    //          it's not checkmate.
+
+    private void findKings(ChessBoard chessBoard) {
+        int whiteKingRow = -1;
+        int whiteKingCol = -1;
+        int blackKingRow = -1;
+        int blackKingCol = -1;
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = chessBoard.getPiece(row, col);
+                if (piece instanceof King) {
+                    if (piece.getColour() == PieceColour.WHITE) {
+                        whiteKingRow = row;
+                        whiteKingCol = col;
+                    } else if (piece.getColour() == PieceColour.BLACK) {
+                        blackKingRow = row;
+                        blackKingCol = col;
+                    }
+                }
+            }
+        }
+        kingLocations.clear();
+        kingLocations.add(whiteKingRow);
+        kingLocations.add(whiteKingCol);
+        kingLocations.add(blackKingRow);
+        kingLocations.add(blackKingCol);
+        System.out.println(kingLocations);
     }
 
     public boolean isKingInCheck(List<Integer> kingLocations, ChessBoard board) {
@@ -170,6 +217,17 @@ public class Main extends ApplicationAdapter {
         }
 
         System.out.println("King not in check");
+        return false;
+    }
+
+    public boolean isStillInCheck(int newRow, int newCol) {
+        if (check) {
+            ChessBoard boardNextMove = chessBoard.copyBoard(chessBoard);
+            boardNextMove = boardNextMove.makeMove(boardNextMove, newRow, newCol, selectedRow, selectedCol);
+            boardNextMove.currentWorldState(boardNextMove);
+            findKings(boardNextMove);
+            return isKingInCheck(kingLocations, boardNextMove);
+        }
         return false;
     }
 
@@ -206,46 +264,179 @@ public class Main extends ApplicationAdapter {
         return numberOfMovesNotInCheck == 0;
     }
 
-    public boolean isStillInCheck(int newRow, int newCol) {
-        if (check) {
-            ChessBoard boardNextMove = chessBoard.copyBoard(chessBoard);
-            boardNextMove = boardNextMove.makeMove(boardNextMove, newRow, newCol, selectedRow, selectedCol);
-            boardNextMove.currentWorldState(boardNextMove);
-            findKings(boardNextMove);
-            return isKingInCheck(kingLocations, boardNextMove);
+
+    private boolean isStalemate(ChessBoard board) {
+        List<Piece> whitePieces = new ArrayList<>();
+        List<Move> piecesValidMoves = new ArrayList<>();
+
+        int piecesWithNoValidMove = 0;
+        int kingsMovesInCheck = 0;
+        int kingsValidMovesSize = 0;
+        int numberOfPieces = 0;
+
+        ChessBoard testCheckmateBoard = chessBoard.copyBoard(chessBoard);
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece != null && piece.getColour() == PieceColour.WHITE) {
+                    whitePieces.add(piece);
+                }
+            }
+        }
+
+        numberOfPieces = whitePieces.size();
+
+        for (Piece piece : whitePieces) {
+            if (!(piece instanceof King)) {
+                if (piece.getValidMoveList().isEmpty()) {
+                    piecesWithNoValidMove++;
+                }
+            } else {
+                piecesValidMoves = piece.getValidMoveList();
+                kingsValidMovesSize = piecesValidMoves.size();
+                int validMovesCount = kingsValidMovesSize; // Store the size of piecesValidMoves
+                for (int i = 0; i < validMovesCount; i++) {
+                    Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
+                    findKings(testCheckmateBoard);
+                    testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                    if (isKingInCheck(kingLocations, testCheckmateBoard)) {
+                        kingsMovesInCheck++;
+                    }
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
+                }
+            }
+        }
+        System.out.println("Number Of kings valid move: " + kingsValidMovesSize + ", " + "Number of kings moves in check: " + kingsMovesInCheck
+                + "\n" + "number of pieces: " + numberOfPieces + ", " + "number of pieces with no validMoves: " + piecesWithNoValidMove);
+        return kingsMovesInCheck == kingsValidMovesSize && numberOfPieces - 1 == piecesWithNoValidMove;
+    }
+
+    // ------------------------- Logic for games rules; Castling and pawn promotion ----------------------------
+
+    public boolean pawnPromotion(ChessBoard board) {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece instanceof Pawn) {
+                    if (piece.getColour() == PieceColour.WHITE) {
+                        if (row == 0) {
+                            Queen queen = new Queen(PieceColour.WHITE);
+                            board.setPiece(row, col, null);
+                            board.setPiece(row, col, queen);
+                            return true;
+                        }
+                    } else {
+                        if (row == 7) {
+                            Queen queen = new Queen(PieceColour.BLACK);
+                            board.setPiece(row, col, null);
+                            board.setPiece(row, col, queen);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean canPlayerCastle(ChessBoard board, int destRow, int destCol) { //TODO this method needs to be simplified
+        int whiteKingRow = 7;
+        int whiteKingCol = 4;
+        int whiteRookLeftRow = 7;
+        int whiteRookLeftCol = 0;
+        int whiteRookRightRow = 7;
+        int whiteRookRightCol = 7;
+
+        int blackKingRow = 0;
+        int blackKingCol = 4;
+        int blackRookLeftRow = 0;
+        int blackRookLeftCol = 0;
+        int blackRookRightRow = 0;
+        int blackRookRightCol = 7;
+
+        Piece whiteKing = board.getPiece(whiteKingRow, whiteKingCol);
+        Piece blackKing = board.getPiece(blackKingRow, blackKingCol);
+
+        if (whiteKing instanceof King) {
+            // White left side castling
+            if (destRow == whiteKingRow && destCol == 2) {
+                Piece whiteRookLeft = board.getPiece(whiteRookLeftRow, whiteRookLeftCol);
+                if (whiteRookLeft instanceof Rook) {
+                    int newKingCol = 2;
+                    int newRookCol = 3;
+                    if (performCastle(board, whiteKingRow, whiteKingCol, whiteKingRow, newKingCol, whiteRookLeftRow, whiteRookLeftCol, whiteRookLeftRow, newRookCol)) {
+                        whitesTurn = !whitesTurn;
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            // White right side castling
+            else if (destRow == whiteKingRow && destCol == 6) {
+                Piece whiteRookRight = board.getPiece(whiteRookRightRow, whiteRookRightCol);
+                if (whiteRookRight instanceof Rook) {
+                    int newKingCol = 6;
+                    int newRookCol = 5;
+                    if (performCastle(board, whiteKingRow, whiteKingCol, whiteKingRow, newKingCol, whiteRookRightRow, whiteRookRightCol, whiteRookRightRow, newRookCol)) {
+                        whitesTurn = !whitesTurn;
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        }
+
+        if (blackKing instanceof King) {
+            // Black left side castling
+            if (destRow == blackKingRow && destCol == 2) {
+                Piece blackRookLeft = board.getPiece(blackRookLeftRow, blackRookLeftCol);
+                if (blackRookLeft instanceof Rook) {
+                    int newKingCol = 2;
+                    int newRookCol = 3;
+                    if (performCastle(board, blackKingRow, blackKingCol, blackKingRow, newKingCol, blackRookLeftRow, blackRookLeftCol, blackRookLeftRow, newRookCol)) {
+                        whitesTurn = true;
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            // Black right side castling
+            else if (destRow == blackKingRow && destCol == 6) {
+                Piece blackRookRight = board.getPiece(blackRookRightRow, blackRookRightCol);
+                if (blackRookRight instanceof Rook) {
+                    int newKingCol = 6;
+                    int newRookCol = 5;
+                    if (performCastle(board, blackKingRow, blackKingCol, blackKingRow, newKingCol, blackRookRightRow, blackRookRightCol, blackRookRightRow, newRookCol)) {
+                        whitesTurn = true;
+                        return true;
+                    }
+                    return false;
+                }
+            }
         }
         return false;
     }
 
 
-    private void findKings(ChessBoard chessBoard) {
-        int whiteKingRow = -1;
-        int whiteKingCol = -1;
-        int blackKingRow = -1;
-        int blackKingCol = -1;
+    private boolean performCastle(ChessBoard board, int kingRow, int kingCol, int newKingRow, int newKingCol,
+                                  int rookRow, int rookCol, int newRookRow, int newRookCol) {
+        Piece king = board.getPiece(kingRow, kingCol);
+        Piece rook = board.getPiece(rookRow, rookCol);
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Piece piece = chessBoard.getPiece(row, col);
-                if (piece instanceof King) {
-                    if (piece.getColour() == PieceColour.WHITE) {
-                        whiteKingRow = row;
-                        whiteKingCol = col;
-                    } else if (piece.getColour() == PieceColour.BLACK) {
-                        blackKingRow = row;
-                        blackKingCol = col;
-                    }
-                }
-            }
+        // Check if the squares about to be set as null are empty
+        if (board.getPiece(newKingRow, newKingCol) == null && board.getPiece(newRookRow, newRookCol) == null) {
+            board.setPiece(kingRow, kingCol, null);
+            board.setPiece(rookRow, rookCol, null);
+            board.setPiece(newKingRow, newKingCol, king);
+            board.setPiece(newRookRow, newRookCol, rook);
+            return true;
+        } else {
+            System.out.println("Nope");
+            return false;
         }
-        kingLocations.clear();
-        kingLocations.add(whiteKingRow);
-        kingLocations.add(whiteKingCol);
-        kingLocations.add(blackKingRow);
-        kingLocations.add(blackKingCol);
-        System.out.println(kingLocations);
     }
-
 
     @Override
     public void dispose() {
