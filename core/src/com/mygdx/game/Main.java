@@ -13,6 +13,7 @@ import com.mygdx.game.Chessboard.Move;
 import com.mygdx.game.Pieces.*;
 import com.mygdx.game.Utilities.ChessNotationConverter;
 
+import javax.print.DocFlavor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,10 +119,9 @@ public class Main extends ApplicationAdapter {
         if ((whitesTurn && selectedPiece.getColour() == PieceColour.WHITE) || (!whitesTurn && selectedPiece.getColour() == PieceColour.BLACK)) {
             canPlayerCastle(chessBoard, row, col);
             if (selectedPiece.isValidMove(selectedRow, selectedCol, row, col, chessBoard)) {
-                if (!isStillInCheck(row, col)) {
+                if (!isStillInCheck(row, col) && doesMoveComplyWithCheckRules(row, col)) {
                     chessBoard.setPiece(row, col, selectedPiece);
                     chessBoard.setPiece(selectedRow, selectedCol, null);
-
                     if (pieceCaptured != null) {
                         allPiecesOnBoard.remove(pieceCaptured);
                         capturedPieces.add(pieceCaptured);
@@ -137,20 +137,10 @@ public class Main extends ApplicationAdapter {
                     check = isKingInCheck(kingLocations, chessBoard);
                     pawnPromotion(chessBoard);
                     whitesTurn = !whitesTurn;
-                    if (isStalemate(chessBoard)) {
-                        System.out.println("Stalemate");
-                    } else {
-                        System.out.println("Not Stalemate");
-                    }
-                    if (check && isCheckmate()) {
-                        System.out.println("checkmate");
-                    } else {
-                        System.out.println("Not Checkmate");
-                    }
+                    gameEndingConditions();
                     System.out.println(chessNotationMoveList);
-
                 } else {
-                    System.out.println("Invalid move: King in check");
+                    System.out.println("Invalid Move");
                 }
             }
         }
@@ -204,11 +194,11 @@ public class Main extends ApplicationAdapter {
             for (int y = 0; y < 8; y++) {
                 Piece piece = board.getPiece(x, y);
                 if (piece != null) {
-                    if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(0), kingLocations.get(1))) || piece.getValidMoveList().contains(new Move(kingLocations.get(0), kingLocations.get(1), -1, -1))) {
+                    if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(0), kingLocations.get(1)))) { //  || piece.getValidMoveList().contains(new Move(kingLocations.get(0), kingLocations.get(1), -1, -1))
                         System.out.println("White King is in check");
                         whiteInCheck = true;
                         return true;
-                    } else if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(2), kingLocations.get(3))) || piece.getValidMoveList().contains(new Move(kingLocations.get(2), -1, kingLocations.get(3), -1))) {
+                    } else if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(2), kingLocations.get(3)))) { //|| piece.getValidMoveList().contains(new Move(kingLocations.get(2), -1, kingLocations.get(3), -1))
                         System.out.println("Black king is in Check");
                         blackInCheck = true;
                         return true;
@@ -218,11 +208,14 @@ public class Main extends ApplicationAdapter {
         }
 
         System.out.println("King not in check");
+        whiteInCheck = false;
+        blackInCheck = false;
         return false;
+
     }
 
     public boolean isStillInCheck(int newRow, int newCol) {
-        if (check) {
+        if(check) {
             ChessBoard boardNextMove = chessBoard.copyBoard(chessBoard);
             boardNextMove = boardNextMove.makeMove(boardNextMove, newRow, newCol, selectedRow, selectedCol);
             boardNextMove.currentWorldState(boardNextMove);
@@ -230,6 +223,26 @@ public class Main extends ApplicationAdapter {
             return isKingInCheck(kingLocations, boardNextMove);
         }
         return false;
+    }
+
+    public boolean doesMoveComplyWithCheckRules(int row, int col) {
+        ChessBoard copiedBoard = chessBoard.copyBoard(chessBoard);
+        copiedBoard.makeMove(copiedBoard, row, col, selectedRow, selectedCol);
+        findKings(copiedBoard);
+        isKingInCheck(kingLocations, copiedBoard);
+        if (whitesTurn && whiteInCheck) {
+            return !isKingInCheck(kingLocations, copiedBoard);
+        } else if (whitesTurn && blackInCheck) {
+            return true;
+        } else if (whitesTurn) {
+            return true;
+        } else if (blackInCheck) {
+            return true;
+        } else if (whiteInCheck) {
+            return true;
+        } else {
+            return !isKingInCheck(kingLocations, copiedBoard);
+        }
     }
 
     private boolean isCheckmate() {
@@ -249,6 +262,18 @@ public class Main extends ApplicationAdapter {
         }
         for (Piece piece : piecesToMove) {
             if (piece.getValidMoveList().size() != 0 && piece.getColour() == PieceColour.WHITE) {
+                List<Move> piecesValidMoves = piece.getValidMoveList();
+                for (Move move : piecesValidMoves) {
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
+                    findKings(testCheckmateBoard);
+
+                    testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                    if (!isKingInCheck(kingLocations, testCheckmateBoard)) {
+                        numberOfMovesNotInCheck++;
+                    }
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
+                }
+            } else if (piece.getValidMoveList().size() != 0 && piece.getColour() == PieceColour.BLACK) {
                 List<Move> piecesValidMoves = piece.getValidMoveList();
                 for (Move move : piecesValidMoves) {
                     testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
@@ -283,13 +308,12 @@ public class Main extends ApplicationAdapter {
                 Piece piece = board.getPiece(row, col);
                 if (piece != null && piece.getColour() == PieceColour.WHITE) {
                     whitePieces.add(piece);
-                } else if(piece != null && piece.getColour() == PieceColour.BLACK) {
+                } else if (piece != null && piece.getColour() == PieceColour.BLACK) {
                     blackPieces.add(piece);
                 }
             }
         }
 
-        if(!whitesTurn) {
             numberOfPieces = whitePieces.size();
             for (Piece piece : whitePieces) {
                 if (!(piece instanceof King)) {
@@ -299,9 +323,8 @@ public class Main extends ApplicationAdapter {
                 } else {
                     piecesValidMoves = piece.getValidMoveList();
                     kingsValidMovesSize = piecesValidMoves.size();
-                    int validMovesCount = kingsValidMovesSize; // Store the size of piecesValidMoves //TODO I can change int kingValidMoveCount in the for loop to kingsValidMoveSize
-                    for (int i = 0; i < validMovesCount; i++) {
-                        Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
+                    for (int i = 0; i < kingsValidMovesSize; i++) {
+                        Move move = piecesValidMoves.get(i);
                         testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
                         findKings(testCheckmateBoard);
                         testCheckmateBoard.currentWorldState(testCheckmateBoard);
@@ -312,7 +335,6 @@ public class Main extends ApplicationAdapter {
                     }
                 }
             }
-        } else {
             numberOfPieces = blackPieces.size();
             for (Piece piece : blackPieces) {
                 if (!(piece instanceof King)) {
@@ -322,8 +344,7 @@ public class Main extends ApplicationAdapter {
                 } else {
                     piecesValidMoves = piece.getValidMoveList();
                     kingsValidMovesSize = piecesValidMoves.size();
-                    int validMovesCount = kingsValidMovesSize; // Store the size of piecesValidMoves //TODO I can change int kingValidMoveCount in the for loop to kingsValidMoveSize
-                    for (int i = 0; i < validMovesCount; i++) {
+                    for (int i = 0; i < kingsValidMovesSize; i++) {
                         Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
                         testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
                         findKings(testCheckmateBoard);
@@ -335,10 +356,22 @@ public class Main extends ApplicationAdapter {
                     }
                 }
             }
-        }
         System.out.println("Number Of kings valid move: " + kingsValidMovesSize + ", " + "Number of kings moves in check: " + kingsMovesInCheck
                 + "\n" + "number of pieces: " + numberOfPieces + ", " + "number of pieces with no validMoves: " + piecesWithNoValidMove);
         return kingsMovesInCheck == kingsValidMovesSize && numberOfPieces - 1 == piecesWithNoValidMove;
+    }
+
+    private void gameEndingConditions() {
+        if (isStalemate(chessBoard)) {
+            System.out.println("Stalemate");
+        } else {
+            System.out.println("Not Stalemate");
+        }
+        if (check && isCheckmate()) {
+            System.out.println("checkmate");
+        } else {
+            System.out.println("Not Checkmate");
+        }
     }
 
     // ------------------------- Logic for games rules; Castling and pawn promotion ----------------------------
