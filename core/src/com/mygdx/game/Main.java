@@ -47,7 +47,7 @@ public class Main extends ApplicationAdapter {
         img = new Texture("board.png");
         background = new Texture("bg.png");
         chessBoard = new ChessBoard();
-        allPiecesOnBoard = ChessBoard.getAllPiecesOnBoard();
+        allPiecesOnBoard = ChessBoard.getAllPiecesOnBoard(); //TODO loop the board in main to get all pieces when the game starts
         font = new BitmapFont();
     }
 
@@ -139,6 +139,7 @@ public class Main extends ApplicationAdapter {
                     whitesTurn = !whitesTurn;
                     gameEndingConditions();
                     System.out.println(chessNotationMoveList);
+                    //System.out.println("Number of pieces: " + allPiecesOnBoard.size() + " " + allPiecesOnBoard);
                 } else {
                     System.out.println("Invalid Move");
                 }
@@ -194,11 +195,11 @@ public class Main extends ApplicationAdapter {
             for (int y = 0; y < 8; y++) {
                 Piece piece = board.getPiece(x, y);
                 if (piece != null) {
-                    if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(0), kingLocations.get(1)))) { //  || piece.getValidMoveList().contains(new Move(kingLocations.get(0), kingLocations.get(1), -1, -1))
+                    if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(0), kingLocations.get(1)))) {
                         System.out.println("White King is in check");
                         whiteInCheck = true;
                         return true;
-                    } else if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(2), kingLocations.get(3)))) { //|| piece.getValidMoveList().contains(new Move(kingLocations.get(2), -1, kingLocations.get(3), -1))
+                    } else if (piece.getDamageSquares().contains(new DamageSquare(kingLocations.get(2), kingLocations.get(3)))) {
                         System.out.println("Black king is in Check");
                         blackInCheck = true;
                         return true;
@@ -206,7 +207,6 @@ public class Main extends ApplicationAdapter {
                 }
             }
         }
-
         System.out.println("King not in check");
         whiteInCheck = false;
         blackInCheck = false;
@@ -269,7 +269,7 @@ public class Main extends ApplicationAdapter {
 
                     testCheckmateBoard.currentWorldState(testCheckmateBoard);
                     if (!isKingInCheck(kingLocations, testCheckmateBoard)) {
-                        numberOfMovesNotInCheck++;
+                        numberOfMovesNotInCheck++; //TODO return false if king is not in check to cancel search
                     }
                     testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
                 }
@@ -281,7 +281,7 @@ public class Main extends ApplicationAdapter {
 
                     testCheckmateBoard.currentWorldState(testCheckmateBoard);
                     if (!isKingInCheck(kingLocations, testCheckmateBoard)) {
-                        numberOfMovesNotInCheck++;
+                        numberOfMovesNotInCheck++; //TODO return false
                     }
                     testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
                 }
@@ -291,7 +291,7 @@ public class Main extends ApplicationAdapter {
     }
 
 
-    private boolean isStalemate(ChessBoard board) {
+    private boolean isStalemate(ChessBoard board) { //TODO add a list hashtable <"white", Piece> || <"black", Piece> and this will allow easy retrieval of pieces given a colour
         List<Piece> whitePieces = new ArrayList<>();
         List<Piece> blackPieces = new ArrayList<>();
         List<Move> piecesValidMoves;
