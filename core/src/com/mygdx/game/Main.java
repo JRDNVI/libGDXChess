@@ -7,13 +7,17 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.mygdx.game.AIFramework.AI;
+import com.mygdx.game.AIFramework.GraphNode;
 import com.mygdx.game.Chessboard.ChessBoard;
 import com.mygdx.game.Chessboard.DamageSquare;
 import com.mygdx.game.Chessboard.Move;
 import com.mygdx.game.Pieces.*;
 import com.mygdx.game.Utilities.ChessNotationConverter;
+import com.mygdx.game.Utilities.EndGameScreens;
+import com.mygdx.game.Utilities.GameInformation;
 
-import javax.print.DocFlavor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +25,8 @@ public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
     private Texture img;
     private Texture background;
+    private Stage stage;
+    private BitmapFont font;
 
     private ChessBoard chessBoard;
     private int selectedRow = -1;
@@ -33,22 +39,28 @@ public class Main extends ApplicationAdapter {
     private boolean blackInCheck = false;
     private boolean whiteInCheck = false;
 
+    private boolean endGame = false;
+
     private List<Piece> allPiecesOnBoard = new ArrayList<>();
     private final List<Piece> capturedPieces = new ArrayList<>();
     private final List<String> chessNotationMoveList = new ArrayList<>();
     private final List<Integer> kingLocations = new ArrayList<>();
     private final ChessNotationConverter converter = new ChessNotationConverter();
+    private AI ai = new AI();
 
-    private BitmapFont font;
+    private int whiteScore = 0;
+    private int blackScore = 0;
+    int currentPlayerColour;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
-        img = new Texture("board.png");
-        background = new Texture("bg.png");
+        img = new Texture("HighRes/chessBoard.png");
+        background = new Texture("HighRes/bg.png");
         chessBoard = new ChessBoard();
-        allPiecesOnBoard = ChessBoard.getAllPiecesOnBoard(); //TODO loop the board in main to get all pieces when the game starts
         font = new BitmapFont();
+        stage = new Stage();
+        Gdx.input.setInputProcessor(stage);
     }
 
     @Override
@@ -57,31 +69,33 @@ public class Main extends ApplicationAdapter {
         Gdx.gl.glClearColor(1, 1, 1, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
-        batch.draw(background, 0, 0, 1000, 1000);
+        batch.draw(background, 0, 0, 750, 550);
         batch.draw(img, 0, 0, 500, 500);
+
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = chessBoard.getPiece(row, col);
                 if (piece != null) {
-                    batch.draw(piece.getTexture(), col * 62.5f + 6.25f, row * 62.5f + 6.25f, 50.5f, 50.5f);
+                    batch.draw(piece.getTexture(), col * 62.5f + 4.25f, row * 62.5f + 9.25f, 48.5f, 48.5f);
                 }
             }
 
-            font.draw(batch, "Played Moves:", 510, 490);
+            //font.draw(batch, "Played Moves:", 510, 490);
+            font.draw(batch, "" + whiteScore, 640, 65);
+            font.draw(batch, "" + blackScore, 605, 500);
+            //font.draw(batch, "Moves: ", 525, 400);
+
             List<String> moves = new ArrayList<>();
-            for (Piece piece : capturedPieces) {
-                String move = piece.shortString();
-                moves.add(move);
-            }
-
-            for (int i = 0; i < capturedPieces.size(); i++) {
-                for (String move : moves) {
-                    font.draw(batch, move, 510, 490 - 20);
-                }
-            }
+            GameInformation.displayCapturedPieces(batch, capturedPieces, moves);
+            GameInformation.displayPlayedMoves(batch, chessNotationMoveList, font);
         }
         batch.end();
+    }
+
+    @Override
+    public void pause() {
+
     }
 
     private void handleInput() {
@@ -115,18 +129,30 @@ public class Main extends ApplicationAdapter {
         Piece selectedPiece = chessBoard.getPiece(selectedRow, selectedCol);
         Piece pieceCaptured = chessBoard.getPiece(row, col);
         System.out.println(selectedPiece);
+        System.out.println(pieceCaptured);
 
         if ((whitesTurn && selectedPiece.getColour() == PieceColour.WHITE) || (!whitesTurn && selectedPiece.getColour() == PieceColour.BLACK)) {
             canPlayerCastle(chessBoard, row, col);
+
+            if (whitesTurn) currentPlayerColour = 0;
+            else currentPlayerColour = 1;
+
             if (selectedPiece.isValidMove(selectedRow, selectedCol, row, col, chessBoard)) {
                 if (!isStillInCheck(row, col) && doesMoveComplyWithCheckRules(row, col)) {
                     chessBoard.setPiece(row, col, selectedPiece);
                     chessBoard.setPiece(selectedRow, selectedCol, null);
                     if (pieceCaptured != null) {
+                        if (pieceCaptured.getColour() == PieceColour.WHITE) {
+                            blackScore += pieceCaptured.pieceValue();
+                        } else {
+                            whiteScore += pieceCaptured.pieceValue();
+                        }
+
                         allPiecesOnBoard.remove(pieceCaptured);
                         capturedPieces.add(pieceCaptured);
                         String moveNotation = selectedPiece.getSymbol() + "x" + converter.convertColumnToLetter(col) + row;
                         chessNotationMoveList.add(moveNotation);
+
                     } else {
                         String moveNotation = selectedPiece.getSymbol() + converter.convertColumnToLetter(col) + row;
                         chessNotationMoveList.add(moveNotation);
@@ -138,14 +164,11 @@ public class Main extends ApplicationAdapter {
                     pawnPromotion(chessBoard);
                     whitesTurn = !whitesTurn;
                     gameEndingConditions();
-                    System.out.println(chessNotationMoveList);
-                    //System.out.println("Number of pieces: " + allPiecesOnBoard.size() + " " + allPiecesOnBoard);
                 } else {
                     System.out.println("Invalid Move");
                 }
             }
         }
-
         selectedRow = -1;
         selectedCol = -1;
     }
@@ -187,7 +210,6 @@ public class Main extends ApplicationAdapter {
         kingLocations.add(whiteKingCol);
         kingLocations.add(blackKingRow);
         kingLocations.add(blackKingCol);
-        System.out.println(kingLocations);
     }
 
     public boolean isKingInCheck(List<Integer> kingLocations, ChessBoard board) {
@@ -207,7 +229,7 @@ public class Main extends ApplicationAdapter {
                 }
             }
         }
-        System.out.println("King not in check");
+        // System.out.println("King not in check");
         whiteInCheck = false;
         blackInCheck = false;
         return false;
@@ -215,7 +237,7 @@ public class Main extends ApplicationAdapter {
     }
 
     public boolean isStillInCheck(int newRow, int newCol) {
-        if(check) {
+        if (check) {
             ChessBoard boardNextMove = chessBoard.copyBoard(chessBoard);
             boardNextMove = boardNextMove.makeMove(boardNextMove, newRow, newCol, selectedRow, selectedCol);
             boardNextMove.currentWorldState(boardNextMove);
@@ -237,7 +259,7 @@ public class Main extends ApplicationAdapter {
         } else if (whitesTurn) {
             return true;
         } else if (blackInCheck) {
-            return true;
+            return !isKingInCheck(kingLocations, copiedBoard);
         } else if (whiteInCheck) {
             return true;
         } else {
@@ -267,7 +289,7 @@ public class Main extends ApplicationAdapter {
                     testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
                     findKings(testCheckmateBoard);
 
-                    testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                    // testCheckmateBoard.currentWorldState(testCheckmateBoard);
                     if (!isKingInCheck(kingLocations, testCheckmateBoard)) {
                         numberOfMovesNotInCheck++; //TODO return false if king is not in check to cancel search
                     }
@@ -279,9 +301,9 @@ public class Main extends ApplicationAdapter {
                     testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
                     findKings(testCheckmateBoard);
 
-                    testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                    // testCheckmateBoard.currentWorldState(testCheckmateBoard);
                     if (!isKingInCheck(kingLocations, testCheckmateBoard)) {
-                        numberOfMovesNotInCheck++; //TODO return false
+                        return false;
                     }
                     testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
                 }
@@ -314,64 +336,71 @@ public class Main extends ApplicationAdapter {
             }
         }
 
-            numberOfPieces = whitePieces.size();
-            for (Piece piece : whitePieces) {
-                if (!(piece instanceof King)) {
-                    if (piece.getValidMoveList().isEmpty()) {
-                        piecesWithNoValidMove++;
+        numberOfPieces = whitePieces.size();
+        for (Piece piece : whitePieces) {
+            if (!(piece instanceof King)) {
+                if (piece.getValidMoveList().isEmpty()) {
+                    piecesWithNoValidMove++;
+                }
+            } else {
+                piecesValidMoves = piece.getValidMoveList();
+                for (int i = 0; i < piecesValidMoves.size(); i++) {
+                    Move move = piecesValidMoves.get(i);
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
+                    findKings(testCheckmateBoard);
+                    //testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                    if (isKingInCheck(kingLocations, testCheckmateBoard)) {
+                        kingsMovesInCheck++;
                     }
-                } else {
-                    piecesValidMoves = piece.getValidMoveList();
-                    kingsValidMovesSize = piecesValidMoves.size();
-                    for (int i = 0; i < kingsValidMovesSize; i++) {
-                        Move move = piecesValidMoves.get(i);
-                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
-                        findKings(testCheckmateBoard);
-                        testCheckmateBoard.currentWorldState(testCheckmateBoard);
-                        if (isKingInCheck(kingLocations, testCheckmateBoard)) {
-                            kingsMovesInCheck++;
-                        }
-                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
-                    }
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
                 }
             }
-            numberOfPieces = blackPieces.size();
-            for (Piece piece : blackPieces) {
-                if (!(piece instanceof King)) {
-                    if (piece.getValidMoveList().isEmpty()) {
-                        piecesWithNoValidMove++;
+        }
+        numberOfPieces = blackPieces.size();
+        for (Piece piece : blackPieces) {
+            if (!(piece instanceof King)) {
+                if (piece.getValidMoveList().isEmpty()) {
+                    piecesWithNoValidMove++;
+                }
+            } else {
+                piecesValidMoves = piece.getValidMoveList();
+                for (int i = 0; i < piecesValidMoves.size(); i++) {
+                    Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
+                    findKings(testCheckmateBoard);
+                    //testCheckmateBoard.currentWorldState(testCheckmateBoard);
+                    if (!isKingInCheck(kingLocations, testCheckmateBoard)) {
+                        return false;
                     }
-                } else {
-                    piecesValidMoves = piece.getValidMoveList();
-                    kingsValidMovesSize = piecesValidMoves.size();
-                    for (int i = 0; i < kingsValidMovesSize; i++) {
-                        Move move = piecesValidMoves.get(i); // Access the moves through piecesValidMoves
-                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getRow(), move.getCol(), move.getPrevRow(), move.getPrevCol());
-                        findKings(testCheckmateBoard);
-                        testCheckmateBoard.currentWorldState(testCheckmateBoard);
-                        if (isKingInCheck(kingLocations, testCheckmateBoard)) {
-                            kingsMovesInCheck++;
-                        }
-                        testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
-                    }
+                    testCheckmateBoard = testCheckmateBoard.makeMove(testCheckmateBoard, move.getPrevRow(), move.getPrevCol(), move.getRow(), move.getCol());
                 }
             }
-        System.out.println("Number Of kings valid move: " + kingsValidMovesSize + ", " + "Number of kings moves in check: " + kingsMovesInCheck
-                + "\n" + "number of pieces: " + numberOfPieces + ", " + "number of pieces with no validMoves: " + piecesWithNoValidMove);
+        }
+        //System.out.println("Number Of kings valid move: " + kingsValidMovesSize + ", " + "Number of kings moves in check: " + kingsMovesInCheck + "\n" + "number of pieces: " + numberOfPieces + ", " + "number of pieces with no validMoves: " + piecesWithNoValidMove);
         return kingsMovesInCheck == kingsValidMovesSize && numberOfPieces - 1 == piecesWithNoValidMove;
     }
 
     private void gameEndingConditions() {
         if (isStalemate(chessBoard)) {
             System.out.println("Stalemate");
-        } else {
-            System.out.println("Not Stalemate");
+            resetGame();
+        } else if (isCheckmate()) {
+            System.out.println("Checkmate");
+            resetGame();
         }
-        if (check && isCheckmate()) {
-            System.out.println("checkmate");
-        } else {
-            System.out.println("Not Checkmate");
-        }
+    }
+
+    private void resetGame() {
+        chessBoard = new ChessBoard();
+
+        capturedPieces.clear();
+        chessNotationMoveList.clear();
+
+        whiteScore = 0;
+        blackScore = 0;
+
+        whitesTurn = true;
+        endGame = false;
     }
 
     // ------------------------- Logic for games rules; Castling and pawn promotion ----------------------------
@@ -382,14 +411,14 @@ public class Main extends ApplicationAdapter {
                 Piece piece = board.getPiece(row, col);
                 if (piece instanceof Pawn) {
                     if (piece.getColour() == PieceColour.WHITE) {
-                        if (row == 0) {
+                        if (row == 7) {
                             Queen queen = new Queen(PieceColour.WHITE);
                             board.setPiece(row, col, null);
                             board.setPiece(row, col, queen);
                             return true;
                         }
                     } else {
-                        if (row == 7) {
+                        if (row == 0) {
                             Queen queen = new Queen(PieceColour.BLACK);
                             board.setPiece(row, col, null);
                             board.setPiece(row, col, queen);
@@ -481,8 +510,7 @@ public class Main extends ApplicationAdapter {
     }
 
 
-    private boolean performCastle(ChessBoard board, int kingRow, int kingCol, int newKingRow, int newKingCol,
-                                  int rookRow, int rookCol, int newRookRow, int newRookCol) {
+    private boolean performCastle(ChessBoard board, int kingRow, int kingCol, int newKingRow, int newKingCol, int rookRow, int rookCol, int newRookRow, int newRookCol) {
         Piece king = board.getPiece(kingRow, kingCol);
         Piece rook = board.getPiece(rookRow, rookCol);
 

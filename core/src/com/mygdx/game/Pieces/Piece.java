@@ -30,13 +30,15 @@ public abstract class Piece {
                     continue;
                 }
                 Piece destPiece = board.getPiece(destRow, destCol);
-                Move move = new Move(sourceRow, sourceCol, destRow, destCol);
+
                 DamageSquare damageSquare = new DamageSquare(destRow, destCol);
                 if (startPiece.isValidMove(sourceRow, sourceCol, destRow, destCol, board)) {
                     if(destPiece == null) {
+                        Move move = new Move(sourceRow, sourceCol, destRow, destCol, false);
                         startPiece.getValidMoveList().add(move);
                     } else  {
-                        startPiece.getDamageSquares().add(damageSquare);
+                        Move move = new Move(sourceRow, sourceCol, destRow, destCol, true);
+                        startPiece.getValidMoveList().add(move);
                     }
                 }
             }

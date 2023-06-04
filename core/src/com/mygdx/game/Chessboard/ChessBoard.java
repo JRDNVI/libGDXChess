@@ -7,7 +7,6 @@ import java.util.List;
 
 public class ChessBoard {
     private final Piece[][] board;
-    private static List<Piece> allPiecesOnBoard = new ArrayList<>();
 
     public ChessBoard() {
         board = new Piece[8][8];
@@ -15,28 +14,27 @@ public class ChessBoard {
     }
 
     private void initialiseBoard() {
-        allPiecesOnBoard.add(board[0][0] = new Rook(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][1] = new Knight(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][2] = new Bishop(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][3] = new Queen(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][4] = new King(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][5] = new Bishop(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][6] = new Knight(PieceColour.BLACK));
-        allPiecesOnBoard.add(board[0][7] = new Rook(PieceColour.BLACK));
+       // board[0][0] = new Rook(PieceColour.WHITE);
+        board[0][1] = new Knight(PieceColour.WHITE);
+        board[0][2] = new Bishop(PieceColour.WHITE);
+        board[0][3] = new Queen(PieceColour.WHITE);
+        board[0][4] = new King(PieceColour.WHITE);
+        board[0][5] = new Bishop(PieceColour.WHITE);
+        board[0][6] = new Knight(PieceColour.WHITE);
+       // board[0][7] = new Rook(PieceColour.WHITE);
 
-
-        allPiecesOnBoard.add(board[7][0] = new Rook(PieceColour.WHITE));
-        allPiecesOnBoard.add(board[7][1] = new Knight(PieceColour.WHITE));
-        allPiecesOnBoard.add(board[7][2] = new Bishop(PieceColour.WHITE));
-        allPiecesOnBoard.add(board[7][3] = new Queen(PieceColour.WHITE));
-        allPiecesOnBoard.add(board[7][4] = new King(PieceColour.WHITE));
-        allPiecesOnBoard.add(board[7][5] = new Bishop(PieceColour.WHITE));
-        allPiecesOnBoard.add(board[7][6] = new Knight(PieceColour.WHITE));
-        allPiecesOnBoard.add(board[7][7] = new Rook(PieceColour.WHITE));
+        //board[7][0] = new Rook(PieceColour.BLACK);
+        board[7][1] = new Knight(PieceColour.BLACK);
+        board[7][2] = new Bishop(PieceColour.BLACK);
+        board[7][3] = new Queen(PieceColour.BLACK);
+        board[7][4] = new King(PieceColour.BLACK);
+        board[7][5] = new Bishop(PieceColour.BLACK);
+        board[7][6] = new Knight(PieceColour.BLACK);
+       // board[7][7] = new Rook(PieceColour.BLACK);
 
         for (int col = 0; col < 8; col++) {
-            allPiecesOnBoard.add(board[1][col] = new Pawn(PieceColour.BLACK));
-            allPiecesOnBoard.add(board[6][col] = new Pawn(PieceColour.WHITE));
+           // board[1][col] = new Pawn(PieceColour.WHITE);
+           // board[6][col] = new Pawn(PieceColour.BLACK);
         }
     }
 
@@ -104,6 +102,53 @@ public class ChessBoard {
         }
     }
 
+    public int evaluatePosition(ChessBoard board) {
+        int score = 0;
+
+        // Piece values
+        int pawnValue = 100;
+        int knightValue = 320;
+        int bishopValue = 330;
+        int rookValue = 500;
+        int queenValue = 900;
+
+        // Iterate over the board and calculate the material balance
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPiece(row, col);
+                if (piece != null) {
+                    if (piece.getColour() == PieceColour.WHITE) {
+                        if (piece instanceof Pawn) {
+                            score += pawnValue;
+                        } else if (piece instanceof Knight) {
+                            score += knightValue;
+                        } else if (piece instanceof Bishop) {
+                            score += bishopValue;
+                        } else if (piece instanceof Rook) {
+                            score += rookValue;
+                        } else if (piece instanceof Queen) {
+                            score += queenValue;
+                        }
+                    } else if (piece.getColour() == PieceColour.BLACK) {
+                        if (piece instanceof Pawn) {
+                            score -= pawnValue;
+                        } else if (piece instanceof Knight) {
+                            score -= knightValue;
+                        } else if (piece instanceof Bishop) {
+                            score -= bishopValue;
+                        } else if (piece instanceof Rook) {
+                            score -= rookValue;
+                        } else if (piece instanceof Queen) {
+                            score -= queenValue;
+                        }
+                    }
+                }
+            }
+        }
+
+        return score;
+    }
+
     public Piece getPiece(int row, int col) {
         return board[row][col];
     }
@@ -118,13 +163,5 @@ public class ChessBoard {
 
     public Piece[][] getBoard() {
         return board;
-    }
-
-    public static List<Piece> getAllPiecesOnBoard() {
-        return allPiecesOnBoard;
-    }
-
-    public static void setAllPiecesOnBoard(List<Piece> allPiecesOnBoard) {
-        ChessBoard.allPiecesOnBoard = allPiecesOnBoard;
     }
 }

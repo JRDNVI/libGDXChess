@@ -5,8 +5,10 @@ public class Move {
     private int prevCol;
     private int col;
     private int row;
+    boolean pieceCaptured;
 
-    public Move(int prevRow, int prevCol, int row, int col) {
+    public Move(int prevRow, int prevCol, int row, int col, boolean pieceCaptured) {
+        this.pieceCaptured = pieceCaptured;
         this.prevRow = prevRow;
         this.prevCol = prevCol;
         this.row = row;
@@ -46,13 +48,22 @@ public class Move {
         this.prevCol = prevCol;
     }
 
+    public boolean isPieceCaptured() {
+        return pieceCaptured;
+    }
+
+    public void setPieceCaptured(boolean pieceCaptured) {
+        this.pieceCaptured = pieceCaptured;
+    }
+
     @Override
     public String toString() {
         return "Move{" +
                 "prevRow=" + prevRow +
                 ", prevCol=" + prevCol +
-                ", row=" + row +
                 ", col=" + col +
+                ", row=" + row +
+                ", pieceCaptured=" + pieceCaptured +
                 '}';
     }
 }

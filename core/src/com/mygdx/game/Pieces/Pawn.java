@@ -18,7 +18,7 @@ public class Pawn extends Piece {
 
         if (sourceCol == destCol) {
             // Moving vertically
-            int rowOffset = pieceColour == PieceColour.BLACK ? 1 : -1;
+            int rowOffset = pieceColour == PieceColour.WHITE ? 1 : -1;
 
             // Moving one square forward
             if (destRow == sourceRow + rowOffset && destinationPiece == null ) {
@@ -26,12 +26,13 @@ public class Pawn extends Piece {
             }
 
             // Moving two squares forward from initial position
-            if (sourceRow == (pieceColour == PieceColour.BLACK ? 1 : 6) && destRow == sourceRow + 2 * rowOffset && destinationPiece == null && board.getPiece(sourceRow + rowOffset, destCol) == null) {
+            if (sourceRow == (pieceColour == PieceColour.WHITE ? 1 : 6) && destRow == sourceRow + 2 * rowOffset && destinationPiece == null && board.getPiece(sourceRow + rowOffset, destCol) == null) {
+
                 return true;
             }
         } else if (Math.abs(sourceCol - destCol) == 1) {
             // Capturing diagonally
-            int rowOffset = pieceColour == PieceColour.BLACK ? 1 : -1;
+            int rowOffset = pieceColour == PieceColour.WHITE ? 1 : -1;
 
             if (destRow == sourceRow + rowOffset && destinationPiece != null && destinationPiece.getColour() != pieceColour) {
                 return true;
@@ -43,7 +44,7 @@ public class Pawn extends Piece {
 
     @Override
     public String getSymbol() {
-        return "P";
+        return "";
     }
 
     @Override
